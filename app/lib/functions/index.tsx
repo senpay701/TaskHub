@@ -58,7 +58,7 @@ export async function registerUser(userData: {
   }
   if (data.token) {
     document.cookie = `token=${data.token}; path=/; max-age=604800`;
-    document.cookie = `id=${data.data.id}; path=/; max-age=604800`;
+    document.cookie = `id=${data.items.id}; path=/; max-age=604800`;
   }
   return data;
 }

@@ -230,7 +230,7 @@ const ProjectPage = () => {
 			setRegisterOpen(false);
 
 			const token = data.token;
-			const id = data.data.id;
+			const id = data.items.id;
 
 			if (token && id) {
 				fetch(`/api/users/${id}`, {
