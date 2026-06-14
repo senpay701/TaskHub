@@ -60,8 +60,6 @@ const Home: React.FC = () => {
       const token = data.token;
       const id = data.items.id;
 
-      console.log(token, id);
-
       if (token && id) {
         fetch(`/api/users/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
