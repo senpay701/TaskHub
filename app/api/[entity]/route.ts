@@ -1,6 +1,6 @@
 import { getUsers, getTasks, getProjectsByUser, createUser, createProject, createTask } from "../../prisma-db";
-import { User, Project, Task } from "../../types/index";
-import { validateUserData, validateProjectData, validateTaskData, validateEmail} from "../../lib/validators/index"
+import { User, Project, Task } from "../../types";
+import { validateUserData, validateProjectData, validateTaskData, validateEmail} from "../../lib/validators"
 import { generateToken, authenticate, getId } from "../../middlewares/jwt"
 
 export async function GET(request: Request, context: { params: Promise<{ entity: string }> }) {

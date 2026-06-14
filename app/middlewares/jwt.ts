@@ -30,7 +30,26 @@ export async function authenticate(request: Request) {
     const payload = jwt.verify(token, SECRET_KEY);
 
     return null; 
-  } catch (err) {
+  } catch {
     return Response.json({ error: 'Invalid token' }, { status: 401, headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+export function getId(request: Request): number {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('Authorization header missing or invalid');
+  }
+
+  const token = authHeader.substring(7);
+  if (!SECRET_KEY) {
+    throw new Error('SECRET_KEY environment variable is not set');
+  }
+
+  const payload = jwt.verify(token, SECRET_KEY);
+  if (typeof payload === 'object' && payload !== null && 'userId' in payload) {
+    return (payload as { userId: number }).userId;
+  } else {
+    throw new Error('Invalid token payload');
   }
 }

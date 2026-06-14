@@ -1,8 +1,8 @@
 import { getUserByEmail } from "../../prisma-db";
-import { User } from "../../types/index";
+import { User, Project, Task } from "../../types/";
 
 export async function validateUserData(
-  data: any,
+  data: User,
   isUpdate = false,
   isLogin = false
 ) {
@@ -42,7 +42,7 @@ export async function validateUserData(
   return errors;
 }
 
-export async function validateProjectData(data: any, isUpdate = false) {
+export async function validateProjectData(data: Project, isUpdate = false) {
   const errors = [];
   if (!isUpdate || ('name' in data)) {
     if (!data.name || typeof data.name !== 'string') {
@@ -60,7 +60,7 @@ export async function validateProjectData(data: any, isUpdate = false) {
   return errors;
 }
 
-export async function validateTaskData(data: any, isUpdate = false) {
+export async function validateTaskData(data: Task, isUpdate = false) {
   const errors = [];
   if (!isUpdate || ('title' in data)) {
     if (!data.title || typeof data.title !== 'string') {
@@ -79,4 +79,9 @@ export async function validateTaskData(data: any, isUpdate = false) {
     }
   }
   return errors;
+}
+
+export async function validateEmail(email: string) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }

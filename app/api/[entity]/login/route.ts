@@ -1,6 +1,6 @@
 import { getUserByEmail } from "../../../prisma-db";
-import { User } from "../../../types/index";
-import { validateUserData} from "../../../lib/validators/index"
+import { User } from "../../../types";
+import { validateUserData} from "../../../lib/validators"
 import { generateToken } from "../../../middlewares/jwt"
 
 export async function POST(request: Request, context: { params: Promise<{ entity: string }> }) {
