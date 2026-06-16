@@ -1,4 +1,4 @@
-import { getUsers, getTasks, getProjectsByUser, createUser, createProject, createTask } from "../../prisma-db";
+import { getUsers, getTasksByUser, getProjectsByUser, createUser, createProject, createTask } from "../../prisma-db";
 import { User, Project, Task } from "../../types";
 import { validateUserData, validateProjectData, validateTaskData, validateEmail} from "../../lib/validators"
 import { generateToken, authenticate, getId } from "../../middlewares/jwt"
@@ -48,7 +48,7 @@ export async function GET(request: Request, context: { params: Promise<{ entity:
         break;
 
       case 'tasks':
-        const tasks: Task[] = await getTasks();
+        const tasks: Task[] = await getTasksByUser(id);
 
         total = tasks.length;
         items = tasks.slice(start, end);
