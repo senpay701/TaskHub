@@ -57,10 +57,28 @@ npx prisma generate
 npx prisma migrate dev --name init
 ```
 
-4. Запуск проекта:
+4. Билдинг проекта:
 
 ```
-npm run dev
+npm run build
+```
+
+или
+
+```
+npx next build 
+```
+
+5. Запуск проекта:
+
+```
+npm run dev 
+```
+
+или
+
+```
+npx next start 
 ```
           
 **http://localhost:3000** — основной порт для доступа к приложению в браузере.         
