@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaEdit, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import { Header } from '../../components/Header';
 import { Modal } from '../../components/Modal';
@@ -46,6 +46,7 @@ const ProjectPage = () => {
 	const [isEditTaskOpen, setEditTaskOpen] = useState(false);
 	const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
+	const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [loginData, setLoginData] = useState({ email: '', password: '' });
 	const [regData, setRegData] = useState({
 		email: '',
@@ -364,52 +365,63 @@ const ProjectPage = () => {
 	}, []);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			const token = getCookie('token');
+		if (debounceTimeout.current) {
+			clearTimeout(debounceTimeout.current);
+		}
+        
+		debounceTimeout.current = setTimeout(() => {
+			const fetchData = async () => {
+				const token = getCookie('token');
 
-			if (token) {
-				setIsLoading(true);
+				if (token) {
+					setIsLoading(true);
 
-				try {
-					if (searchTerm && searchTerm !== '') {
-						const res = await fetch(
-							`/api/tasks/search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}&searchId=${projectId}`,
-							{ headers: { Authorization: `Bearer ${token}` } }
-						);
-						const data = await res.json();
-						setTasks(data.items);
-						setFilteredTasks(data.items);
-						setTotalItems(data.total);
-						setCurrentPage(data.page);
-						setTotalPages(data.pages);
-					} else {
-						const res = await fetch(`/api/projects/${projectId}`, {
-							headers: { Authorization: `Bearer ${token}` },
-						});
-						const data = await res.json();
-						if (data.items) {
-							setProject(data.items);
-							setTasks(data.items.tasks);
-							setFilteredTasks(data.items.tasks);
-							setTotalPages(Math.ceil(data.items.tasks.length / itemsPerPage));
+					try {
+						if (searchTerm && searchTerm !== '') {
+							const res = await fetch(
+								`/api/tasks/search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}&searchId=${projectId}`,
+								{ headers: { Authorization: `Bearer ${token}` } }
+							);
+							const data = await res.json();
+							setTasks(data.items);
+							setFilteredTasks(data.items);
+							setTotalItems(data.total);
+							setCurrentPage(data.page);
+							setTotalPages(data.pages);
 						} else {
-							router.push('/projects');
+							const res = await fetch(`/api/projects/${projectId}`, {
+								headers: { Authorization: `Bearer ${token}` },
+							});
+							const data = await res.json();
+							if (data.items) {
+								setProject(data.items);
+								setTasks(data.items.tasks);
+								setFilteredTasks(data.items.tasks);
+								setTotalPages(Math.ceil(data.items.tasks.length / itemsPerPage));
+							} else {
+								router.push('/projects');
+							}
 						}
+					} catch {
+						setTasks([]);
+						setFilteredTasks([]);
+					} finally {
+						setIsLoading(false);
+						setIsLoadingPage(false);
 					}
-				} catch {
-					setTasks([]);
-					setFilteredTasks([]);
-				} finally {
+				} else {
 					setIsLoading(false);
 					setIsLoadingPage(false);
 				}
-			} else {
-				setIsLoading(false);
-				setIsLoadingPage(false);
+			};
+			fetchData();
+		}, 300); 
+
+		return () => {
+			if (debounceTimeout.current) {
+				clearTimeout(debounceTimeout.current);
 			}
 		};
-
-		fetchData();
 	}, [router, projectId, searchTerm, currentPage, itemsPerPage]);
 
 	if (isLoadingPage) {
