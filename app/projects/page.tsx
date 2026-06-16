@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaEdit, FaTrash, FaExternalLinkAlt   } from 'react-icons/fa';
 import { Header } from '../components/Header';
 import { Modal } from '../components/Modal';
@@ -39,6 +39,7 @@ const MyProjectsPage = () => {
 	const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [regData, setRegData] = useState({
     email: '',
     name: '',
@@ -46,7 +47,6 @@ const MyProjectsPage = () => {
     repeatPassword: '',
     agreeToPrivacy: false,
   });
-
   const handleSuccess = () => {
     setShowNotification(true);
     setFade(false);
@@ -373,39 +373,51 @@ const MyProjectsPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchProjectsSearch = async () => {
-      const token = getCookie('token');
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
 
-      if (token) {
-        setIsLoading(true);
-        let url = `/api/projects/`;
-        if (searchTerm && searchTerm !== '') {
-          url += `search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}`;
+    debounceTimeout.current = setTimeout(() => {
+      const fetchProjectsSearch = async () => {
+        const token = getCookie('token');
+
+        if (token) {
+          setIsLoading(true);
+          let url = `/api/projects/`;
+          if (searchTerm && searchTerm !== '') {
+            url += `search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}`;
+          } else {
+            url += `?page=${currentPage}&limit=${itemsPerPage}`;
+          }
+          try {
+            const res = await fetch(url, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setProjects(data.items);
+            setFilteredProjects(data.items);
+            setTotalItems(data.total);
+            setCurrentPage(data.page);
+            setTotalPages(data.pages);
+          } catch {
+            setProjects([]);
+            setFilteredProjects([]);
+          } finally {
+            setIsLoading(false);
+          }
         } else {
-          url += `?page=${currentPage}&limit=${itemsPerPage}`;
-        }
-        try {
-          const res = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          setProjects(data.items);
-          setFilteredProjects(data.items);
-          setTotalItems(data.total);
-          setCurrentPage(data.page);
-          setTotalPages(data.pages);
-        } catch {
-          setProjects([]);
-          setFilteredProjects([]);
-        } finally {
           setIsLoading(false);
         }
-      } else {
-        setIsLoading(false);
+      };
+
+      fetchProjectsSearch();
+    }, 300); 
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
       }
     };
-
-    fetchProjectsSearch();
   }, [searchTerm, currentPage, itemsPerPage]);
 
   if (isLoadingPage) {
