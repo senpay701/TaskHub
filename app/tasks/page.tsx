@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaEdit, FaTrash, FaExternalLinkAlt} from 'react-icons/fa';
 import { Header } from '../components/Header';
 import { Modal } from '../components/Modal';
@@ -41,6 +41,7 @@ const MyTasksPage = () => {
 	const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [loginData, setLoginData] = useState({ email: '', password: '' });
+	const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [regData, setRegData] = useState({
 		email: '',
 		name: '',
@@ -323,8 +324,7 @@ const MyTasksPage = () => {
 					setCurrentPage(data.page);
 					setTotalPages(data.pages);
 				})
-				.catch((e) => {
-					console.log(e);
+				.catch(() => {
 					setTasks([]);
 					setFilteredTasks([]);
 				})
@@ -385,39 +385,51 @@ const MyTasksPage = () => {
 	}, []);
 
 	useEffect(() => {
-		const fetchFilteredTasks = async () => {
-			const token = getCookie('token');
+		if (debounceTimeout.current) {
+			clearTimeout(debounceTimeout.current);
+		}
+		
+		debounceTimeout.current = setTimeout(() => {
+			const fetchFilteredTasks = async () => {
+				const token = getCookie('token');
 
-			if (token) {
-				setIsLoading(true);
-				let url = `/api/tasks/`;
-				if (searchTerm && searchTerm !== '') {
-					url += `search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}`;
+				if (token) {
+					setIsLoading(true);
+					let url = `/api/tasks/`;
+					if (searchTerm && searchTerm !== '') {
+						url += `search?q=${encodeURIComponent(searchTerm)}&page=${currentPage}&limit=${itemsPerPage}`;
+					} else {
+						url += `?page=${currentPage}&limit=${itemsPerPage}`;
+					}
+					try {
+						const res = await fetch(url, {
+							headers: { Authorization: `Bearer ${token}` },
+						});
+						const data = await res.json();
+
+						setTasks(data.items);
+						setFilteredTasks(data.items);
+						setTotalItems(data.total);
+						setCurrentPage(data.page);
+						setTotalPages(data.pages);
+					} catch {
+						setTasks([]);
+						setFilteredTasks([]);
+					} finally {
+						setIsLoading(false);
+					}
 				} else {
-					url += `?page=${currentPage}&limit=${itemsPerPage}`;
-				}
-				try {
-					const res = await fetch(url, {
-						headers: { Authorization: `Bearer ${token}` },
-					});
-					const data = await res.json();
-					setTasks(data.items);
-					setFilteredTasks(data.items);
-					setTotalItems(data.total);
-					setCurrentPage(data.page);
-					setTotalPages(data.pages);
-				} catch {
-					setTasks([]);
-					setFilteredTasks([]);
-				} finally {
 					setIsLoading(false);
 				}
-			} else {
-				setIsLoading(false);
+			};
+			fetchFilteredTasks();
+    	}, 300);
+
+		return () => {
+			if (debounceTimeout.current) {
+				clearTimeout(debounceTimeout.current);
 			}
 		};
-
-		fetchFilteredTasks();
 	}, [searchTerm, currentPage, itemsPerPage]);
 
 	useEffect(() => {
