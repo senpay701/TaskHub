@@ -1,4 +1,4 @@
-import { getUsers, getTasks, getProjectsByUser } from "../../../prisma-db";
+import { getUsers, getTasksByUser, getProjectsByUser, getTaskById } from "../../../prisma-db";
 import { User, Project, Task } from "../../../types/index";
 import { authenticate, getId } from "../../../middlewares/jwt";
 
@@ -70,7 +70,7 @@ export async function GET(request: Request, context: { params: Promise<{ entity:
 				break;
 				
 			case 'tasks':
-				let tasks: Task[] = await getTasks();
+				let tasks: Task[] = await getTasksByUser(id);
 
 				if (search) {
 					const s = search.toLowerCase();
