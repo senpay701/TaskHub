@@ -401,7 +401,6 @@ const MyTasksPage = () => {
 						headers: { Authorization: `Bearer ${token}` },
 					});
 					const data = await res.json();
-					console.log(data);
 					setTasks(data.items);
 					setFilteredTasks(data.items);
 					setTotalItems(data.total);
